@@ -1,39 +1,190 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 <div class="container my-5">
     <h1 class="text-center mb-4">Каталог товаров</h1>
-    <div class="row">
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <img src="https://via.placeholder.com/300x200/ff6b6b/ffffff?text=Развивающие+игрушки" 
-                     class="card-img-top" alt="Развивающие игрушки">
-                <div class="card-body">
-                    <h5 class="card-title">Развивающие игрушки</h5>
-                    <p class="card-text">Игрушки для развития мышления и моторики</p>
-                </div>
-            </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3 mb-2">
+            <select class="form-select" id="categoryFilter">
+                <option value="">Все категории</option>
+                <option value="plush">Плюшевые игрушки</option>
+                <option value="constructor">Конструкторы</option>
+                <option value="doll">Куклы</option>
+                <option value="educational">Развивающие</option>
+                <option value="creative">Творческие наборы</option>
+            </select>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <img src="https://via.placeholder.com/300x200/4ecdc4/ffffff?text=Конструкторы" 
-                     class="card-img-top" alt="Конструкторы">
-                <div class="card-body">
-                    <h5 class="card-title">Конструкторы</h5>
-                    <p class="card-text">Развиваем воображение и творческие способности</p>
-                </div>
-            </div>
+        <div class="col-md-3 mb-2">
+            <select class="form-select" id="sortBy">
+                <option value="name">По наименованию</option>
+                <option value="price_asc">По цене (сначала дешевые)</option>
+                <option value="price_desc">По цене (сначала дорогие)</option>
+                <option value="year">По году производства</option>
+            </select>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <img src="https://via.placeholder.com/300x200/45b7d1/ffffff?text=Куклы+и+аксессуары" 
-                     class="card-img-top" alt="Куклы и аксессуары">
-                <div class="card-body">
-                    <h5 class="card-title">Куклы и аксессуары</h5>
-                    <p class="card-text">Большой выбор кукол и аксессуаров для них</p>
-                </div>
+        <div class="col-md-3 mb-2">
+            <input type="text" class="form-control" placeholder="Поиск по названию..." id="searchInput">
+        </div>
+        <div class="col-md-3 mb-2">
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="inStockOnly" checked>
+                <label class="form-check-label" for="inStockOnly">
+                    Только в наличии
+                </label>
             </div>
         </div>
     </div>
+    
+    <!-- Все товары -->
+    <div class="row" id="productsContainer">
+        {% for product in products %}
+        <div class="col-md-3 mb-4 product-card" 
+             data-category="{{ product.category }}"
+             data-price="{{ product.price_num }}"
+             data-year="{{ product.year }}"
+             data-name="{{ product.name|lower }}"
+             data-stock="{{ product.in_stock }}">
+            <div class="card h-100">
+                {% if product.in_stock %}
+                <span class="badge bg-success position-absolute" style="top: 10px; right: 10px;">
+                    В наличии
+                </span>
+                {% else %}
+                <span class="badge bg-secondary position-absolute" style="top: 10px; right: 10px;">
+                    Нет в наличии
+                </span>
+                {% endif %}
+                
+                <img src="{% static product.image %}" 
+                     class="card-img-top" 
+                     alt="{{ product.name }}"
+                     style="height: 200px; object-fit: cover;">
+                
+                <div class="card-body">
+                    <h6 class="card-title">{{ product.name }}</h6>
+                    <div class="price fw-bold text-primary mb-2">
+                        {{ product.price }} ₽
+                    </div>
+                    <small class="text-muted">Год: {{ product.year }}</small>
+                </div>
+                
+                <div class="card-footer bg-white">
+                    {% if product.in_stock %}
+                    <button class="btn btn-success w-100">
+                        <i class="fas fa-money-bill-wave"></i> Купить
+                    </button>
+                    {% else %}
+                    <button class="btn btn-outline-secondary w-100" disabled>
+                        <i class="fas fa-ban"></i> Нет в наличии
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categoryFilter = document.getElementById('categoryFilter');
+    const sortBy = document.getElementById('sortBy');
+    const searchInput = document.getElementById('searchInput');
+    const inStockOnly = document.getElementById('inStockOnly');
+    const productsContainer = document.getElementById('productsContainer');
+    const productCards = productsContainer.querySelectorAll('.product-card');
+
+    function filterProducts() {
+        const category = categoryFilter.value;
+        const sortValue = sortBy.value;
+        const searchText = searchInput.value.toLowerCase();
+        const onlyInStock = inStockOnly.checked;
+
+        let visibleProducts = [];
+
+        productCards.forEach(card => {
+            const productCategory = card.dataset.category;
+            const productName = card.dataset.name;
+            const inStock = card.dataset.stock === 'true';
+            
+            const categoryMatch = !category || productCategory === category;
+            const searchMatch = productName.includes(searchText);
+            const stockMatch = !onlyInStock || inStock;
+            
+            if (categoryMatch && searchMatch && stockMatch) {
+                card.style.display = 'block';
+                visibleProducts.push(card);
+            } else {
+                card.style.display = 'none';
+            }
+        });
+
+        // Сортировка
+        visibleProducts.sort((a, b) => {
+            switch(sortValue) {
+                case 'name':
+                    return a.dataset.name.localeCompare(b.dataset.name);
+                case 'price_asc':
+                    return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+                case 'price_desc':
+                    return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+                case 'year':
+                    return parseInt(b.dataset.year) - parseInt(a.dataset.year);
+                default:
+                    return 0;
+            }
+        });
+
+        // Перестановка элементов
+        visibleProducts.forEach(card => {
+            productsContainer.appendChild(card);
+        });
+    }
+
+    // Слушатели событий
+    categoryFilter.addEventListener('change', filterProducts);
+    sortBy.addEventListener('change', filterProducts);
+    searchInput.addEventListener('input', filterProducts);
+    inStockOnly.addEventListener('change', filterProducts);
+});
+</script>
+
+<style>
+    .card {
+        border: 1px solid #ddd;
+        transition: box-shadow 0.3s ease;
+    }
+    
+    .card:hover {
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    
+    .card-title {
+        font-weight: 600;
+        margin-bottom: 10px;
+        height: 40px;
+        overflow: hidden;
+    }
+    
+    .price {
+        font-size: 1.1rem;
+    }
+    
+    .btn-success {
+        background-color: #28a745;
+        border-color: #28a745;
+    }
+    
+    .btn-success:hover {
+        background-color: #218838;
+        border-color: #1e7e34;
+    }
+    
+    .badge {
+        font-size: 0.8rem;
+        padding: 5px 10px;
+    }
+</style>
 {% endblock %}

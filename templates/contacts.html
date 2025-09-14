@@ -1,39 +1,60 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 <div class="container my-5">
     <h1 class="text-center mb-4">Контакты</h1>
     <div class="row">
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Наши контакты</h5>
-                    <p><i class="fas fa-map-marker-alt"></i> Адрес: г. Москва, ул. Детская, д. 123</p>
-                    <p><i class="fas fa-phone"></i> Телефон: +7 (495) 123-45-67</p>
-                    <p><i class="fas fa-envelope"></i> Email: info@detskiy-mir.ru</p>
-                    <p><i class="fas fa-clock"></i> Время работы: Пн-Пт 9:00-21:00, Сб-Вс 10:00-20:00</p>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100 contact-card">  
+                <div class="card-body d-flex flex-column justify-content-center align-items-center text-center p-4">
+                    <h5 class="card-title mb-4">Наши контакты</h5>
+                    <div class="contact-info">
+                        <p class="fs-5 mb-3"><i class="fas fa-map-marker-alt me-2"></i> Адрес: г. Москва, ул. Детская, д. 123</p>
+                        <p class="fs-5 mb-3"><i class="fas fa-phone me-2"></i> Телефон: +7 (495) 123-45-67</p>
+                        <p class="fs-5 mb-3"><i class="fas fa-envelope me-2"></i> Email: info@plyshevy-mir.ru</p>
+                    </div>
                 </div>
             </div>
         </div>
-        <div class="col-md-6">
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Напишите нам</h5>
-                    <form>
-                        <div class="mb-3">
-                            <input type="text" class="form-control" placeholder="Ваше имя">
-                        </div>
-                        <div class="mb-3">
-                            <input type="email" class="form-control" placeholder="Email">
-                        </div>
-                        <div class="mb-3">
-                            <textarea class="form-control" rows="4" placeholder="Сообщение"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary">Отправить</button>
-                    </form>
+        <div class="col-md-6 mb-4">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column"> 
+                    <h5 class="card-title text-center mb-3">Мы на карте</h5>
+                    <div class="flex-grow-1 mb-3"> 
+                        <img src="/static/images/map/store-map.png" 
+                            alt="Карта проезда в магазин Плюшевый мир" 
+                            class="img-fluid rounded w-100 h-100"
+                            style="object-fit: cover;">
+                    </div>
+                    <div class="text-center">
+                        <p class="text-muted mb-2 fs-5">
+                            <i class="fas fa-map-marked-alt me-2"></i>
+                            г. Москва, ул. Детская, д. 123
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
-</div>
+
+<style>
+    .card {
+        min-height: 400px; 
+    }
+    .card-body {
+        display: flex;
+        flex-direction: column;
+    }
+    .contact-card {
+        background-color: #f8f9fa;
+    }
+    .contact-info p {
+        margin-bottom: 1.5rem;
+    }
+    .contact-info i {
+        color: #ff6b6b;
+        width: 24px;
+    }
+</style>
 {% endblock %}

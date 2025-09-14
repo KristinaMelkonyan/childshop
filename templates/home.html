@@ -1,11 +1,12 @@
 {% extends 'base.html' %}
+{% load static %}
 
 {% block content %}
 <!-- Девиз сайта -->
 <div class="hero-section">
     <div class="container">
         <h1 class="display-4">Дарим радость детям!</h1>
-        <p class="lead">Лучшие игрушки и товары для счастливого детства</p>
+        <p class="lead">ღ Создаём наш плюшевый мир вместе ღ</p>
     </div>
 </div>
 
@@ -23,7 +24,7 @@
         <div class="carousel-inner">
             {% for slide in slides %}
             <div class="carousel-item {% if forloop.first %}active{% endif %}">
-                <img src="https://via.placeholder.com/1200x500/4ecdc4/ffffff?text={{ slide.title|urlencode }}" 
+                <img src="{% static slide.image %}" 
                      class="d-block w-100 slide-image" alt="{{ slide.title }}">
                 <div class="carousel-caption d-none d-md-block">
                     <h2>{{ slide.title }}</h2>
@@ -42,24 +43,175 @@
     </div>
 </div>
 
-<!-- Дополнительный контент -->
+<!-- Описание компании -->
 <div class="container my-5">
     <div class="row">
-        <div class="col-md-4 text-center">
-            <i class="fas fa-shipping-fast fa-3x text-primary mb-3"></i>
-            <h3>Быстрая доставка</h3>
-            <p>Доставка по всей России за 1-3 дня</p>
-        </div>
-        <div class="col-md-4 text-center">
-            <i class="fas fa-shield-alt fa-3x text-success mb-3"></i>
-            <h3>Качество гарантировано</h3>
-            <p>Все товары сертифицированы и безопасны</p>
-        </div>
-        <div class="col-md-4 text-center">
-            <i class="fas fa-headset fa-3x text-warning mb-3"></i>
-            <h3>Поддержка 24/7</h3>
-            <p>Всегда готовы помочь с выбором</p>
-        </div>
-    </div>
+        <div class="col-12">
+            <div class="about-company">
+                <h2 class="text-center mb-4">О компании "Плюшевый мир"</h2>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="about-content">
+                            <h4>Наша история</h4>
+                            <p>«Плюшевый мир» - это семейный магазин, который начал свою работу в 2010 году. 
+                            Мы создаем уютный уголок детства, где каждый ребенок может найти своего плюшевого друга.</p>
+                            
+                            <h4>Наша миссия</h4>
+                            <p>Мы верим, что каждая игрушка должна нести радость и тепло. 
+                            Наша цель - сделать детство каждого малыша ярким и запоминающимся с помощью качественных 
+                            и безопасных игрушек.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="about-content">
+                            <h4>Почему выбирают нас?</h4>
+                            <ul class="list-unstyled advantages-list">
+                                <li>
+                                    <span class="check-icon">✓</span>
+                                    Только сертифицированные товары
+                                </li>
+                                <li>
+                                    <span class="check-icon">✓</span>
+                                    Экологичные материалы
+                                </li>
+                                <li>
+                                    <span class="check-icon">✓</span>
+                                    Безопасность для детей
+                                </li>
+                                <li>
+                                    <span class="check-icon">✓</span>
+                                    Постоянные новинки
+                                </li>
+                                <li>
+                                    <span class="check-icon">✓</span>
+                                    Профессиональные консультации
+                                </li>
+                                <li>
+                                    <span class="check-icon">✓</span>
+                                    Гарантия качества
+                                </li>
+                            </ul>
+                            
+                            <h4>Наши ценности</h4>
+                            <p>Забота о детях, качество продукции и индивидуальный подход к каждому клиенту - 
+                            вот что делает «Плюшевый мир» особенным.</p>
+                        </div>
+                    </div>
+                </div>
+                
 </div>
+
+<style>
+    .about-company {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 3rem;
+        border-radius: 15px;
+        box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+    }
+    
+    .about-content h4 {
+        color: #ff6b6b;
+        margin-bottom: 1rem;
+        font-weight: 600;
+    }
+    
+    .about-content p {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: #495057;
+        margin-bottom: 1.5rem;
+    }
+    
+    .advantages-list li {
+        padding: 0.7rem 0;
+        font-size: 1.1rem;
+        color: #495057;
+        display: flex;
+        align-items: center;
+        transition: transform 0.2s ease;
+    }
+    
+    .advantages-list li:hover {
+        transform: translateX(5px);
+    }
+    
+    .check-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: linear-gradient(45deg, #4ecdc4, #ff6b6b);
+        color: white;
+        border-radius: 50%;
+        margin-right: 15px;
+        font-weight: bold;
+        font-size: 14px;
+        box-shadow: 0 3px 10px rgba(78, 205, 196, 0.3);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .advantages-list li:hover .check-icon {
+        transform: scale(1.1);
+        box-shadow: 0 5px 15px rgba(78, 205, 196, 0.4);
+    }
+    
+    .stats-row {
+        display: flex;
+        justify-content: center;
+        gap: 3rem;
+        margin-top: 2rem;
+        flex-wrap: wrap;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1.5rem;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 3px 15px rgba(0,0,0,0.1);
+        min-width: 120px;
+    }
+    
+    .stat-item h3 {
+        color: #4ecdc4;
+        font-weight: bold;
+        margin: 0;
+    }
+    
+    .stat-item p {
+        margin: 0;
+        color: #6c757d;
+        font-weight: 500;
+    }
+    
+    @media (max-width: 768px) {
+        .about-company {
+            padding: 2rem 1rem;
+        }
+        
+        .stats-row {
+            gap: 1rem;
+        }
+        
+        .stat-item {
+            min-width: 100px;
+            padding: 1rem;
+        }
+        
+        .advantages-list li {
+            font-size: 1rem;
+            padding: 0.5rem 0;
+        }
+        
+        .check-icon {
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            margin-right: 10px;
+        }
+    }
+</style>
 {% endblock %}
