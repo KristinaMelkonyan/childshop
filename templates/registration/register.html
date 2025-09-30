@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="text-center">Регистрация</h4>
+                </div>
+                <div class="card-body">
+                    <form id="registerForm">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="id_surname" class="form-label">Фамилия *</label>
+                            {{ form.surname }}
+                            <div class="invalid-feedback" id="surname_error"></div>
+                        </div>
+ 
+                        <div class="mb-3">
+                            <label for="id_name" class="form-label">Имя *</label>
+                            {{ form.name }}
+                            <div class="invalid-feedback" id="name_error"></div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_patronymic" class="form-label">Отчество</label>
+                            {{ form.patronymic }}
+                            <div class="invalid-feedback" id="patronymic_error"></div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_username" class="form-label">Логин *</label>
+                            {{ form.username }}
+                            <div class="invalid-feedback" id="username_error"></div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="id_email" class="form-label">Email *</label>
+                            {{ form.email }}
+                            <div class="invalid-feedback" id="email_error"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_password1" class="form-label">Пароль * (минимум 6 символов)</label>
+                            {{ form.password1 }}
+                            <div class="invalid-feedback" id="password1_error"></div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="id_password2" class="form-label">Повторите пароль *</label>
+                            {{ form.password2 }}
+                            <div class="invalid-feedback" id="password2_error"></div>
+                        </div>
+                        
+                        <div class="mb-3 form-check">
+                            {{ form.rules }}
+                            <label class="form-check-label" for="id_rules">
+                                Согласен с правилами регистрации *
+                            </label>
+                            <div class="invalid-feedback" id="rules_error"></div>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary w-100">Зарегистрироваться</button>
+                    </form>
+                    
+                    <div class="mt-3 text-center">
+                        <a href="{% url 'login' %}">Уже есть аккаунт? Войдите</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch("{% url 'register' %}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Очищаем предыдущие ошибки
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+        
+        if (data.success) {
+            window.location.href = "{% url 'home' %}";
+        } else {
+            // Показываем ошибки для каждого поля
+            if (data.errors) {
+                for (const [field, error] of Object.entries(data.errors)) {
+                    let fieldId = `id_${field}`;
+                    let errorDivId = `${field}_error`;
+                    
+                    const input = document.getElementById(fieldId);
+                    const errorDiv = document.getElementById(errorDivId);
+                    
+                    if (input && errorDiv) {
+                        input.classList.add('is-invalid');
+                        errorDiv.textContent = error;
+                    } else {
+                        console.warn(`Не найдены элементы для поля: ${field}`, {
+                            input: document.getElementById(fieldId),
+                            errorDiv: document.getElementById(errorDivId)
+                        });
+                    }
+                }
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Произошла ошибка при регистрации');
+    });
+});
+</script>
+{% endblock %}
