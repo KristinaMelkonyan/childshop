@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <!-- Изображение товара -->
+        <div class="col-md-6 mb-4">
+            {% if product.image %}
+            <img src="{{ product.image.url }}" 
+                 class="img-fluid rounded"
+                 alt="{{ product.name }}"
+                 style="max-height: 400px; width: 100%; object-fit: cover;">
+            {% else %}
+            <img src="{% static 'images/no-image.jpg' %}" 
+                 class="img-fluid rounded"
+                 alt="Нет изображения"
+                 style="max-height: 400px; width: 100%; object-fit: cover;">
+            {% endif %}
+        </div>
+        
+        <!-- Информация о товаре -->
+        <div class="col-md-6">
+            <div class="p-3">
+                <h1 class="mb-3">{{ product.name }}</h1>
+                
+                <!-- Цена и статус -->
+                <div class="d-flex align-items-center mb-3">
+                    <span class="price fs-2 fw-bold">{{ product.price }} ₽</span>
+                    {% if product.in_stock %}
+                    <span class="badge stock-badge ms-3">В наличии</span>
+                    {% else %}
+                    <span class="badge bg-secondary ms-3">Нет в наличии</span>
+                    {% endif %}
+                </div>
+                
+                <!-- Характеристики -->
+                <div class="mb-4">
+                    <h5 class="mb-3">Характеристики</h5>
+                    <div class="specs-list">
+                        <div class="spec-item mb-2">
+                            <strong>Категория:</strong> {{ product.get_category_display }}
+                        </div>
+                        {% if product.year %}
+                        <div class="spec-item mb-2">
+                            <strong>Год производства:</strong> {{ product.year }}
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Описание -->
+                {% if product.description %}
+                <div class="mb-4">
+                    <h5 class="mb-3">Описание</h5>
+                    <p class="text-muted">{{ product.description }}</p>
+                </div>
+                {% endif %}
+                
+                <!-- Кнопки действий -->
+                <div class="action-buttons">
+                    {% if product.in_stock %}
+                    <button class="btn primary-btn btn-lg w-100 mb-2">
+                        🛒 Добавить в корзину
+                    </button>
+                    {% else %}
+                    <button class="btn btn-secondary btn-lg w-100 mb-2" disabled>
+                        ❌ Товар отсутствует
+                    </button>
+                    {% endif %}
+                    <a href="{% url 'catalog' %}" class="btn btn-outline-secondary w-100">
+                        ← Назад в каталог
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Цветовая схема как в каталоге */
+    .price {
+        color: #ff7eb9;
+    }
+    
+    .stock-badge {
+        background: #28a745;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+    }
+    
+    .primary-btn {
+        background: #ff7eb9;
+        border: none;
+        color: white;
+        padding: 0.75rem;
+        border-radius: 8px;
+        transition: all 0.3s ease;
+    }
+    
+    .primary-btn:hover {
+        background: #ff65a3;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(255, 126, 185, 0.3);
+        color: white;
+    }
+    
+    .specs-list {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid #ffe6ee;
+    }
+    
+    .spec-item {
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f8f9fa;
+    }
+    
+    .spec-item:last-child {
+        border-bottom: none;
+    }
+    
+    h1, h5 {
+        color: #333;
+    }
+    
+    .btn-outline-secondary {
+        border-color: #dee2e6;
+        color: #6c757d;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-outline-secondary:hover {
+        background: #f8f9fa;
+        border-color: #adb5bd;
+    }
+    
+    /* Адаптивность */
+    @media (max-width: 768px) {
+        .container {
+            margin-top: 1rem;
+        }
+        
+        .price {
+            font-size: 1.5rem;
+        }
+        
+        .primary-btn, .btn-outline-secondary {
+            padding: 0.6rem;
+            font-size: 0.9rem;
+        }
+    }
+</style>
+{% endblock %}

@@ -3,6 +3,12 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 from .forms import RegistrationForm, LoginForm
+from django.shortcuts import render, get_object_or_404
+from .models import Product
+
+@login_required
+def profile(request):
+    return render(request, 'profile.html')
 
 def home(request):
     slides = [
@@ -25,85 +31,22 @@ def home(request):
     return render(request, 'home.html', {'slides': slides})
 
 def catalog(request):
-    products = [
-        {
-            'name': 'Плюшевый мишка большой',
-            'price': '1 499',
-            'price_num': 1499,
-            'image': 'images/products/toys/teddy-bear.jpg',
-            'category': 'plush',
-            'year': 2024,
-            'in_stock': True
-        },
-        {
-            'name': 'Конструктор LEGO Classic',
-            'price': '2 999',
-            'price_num': 2999,
-            'image': 'images/products/toys/lego.jpg',
-            'category': 'constructor',
-            'year': 2023,
-            'in_stock': True
-        },
-        {
-            'name': 'Кукла с аксессуарами',
-            'price': '3 499',
-            'price_num': 3499,
-            'image': 'images/products/accessories/doll-set.jpg',
-            'category': 'doll',
-            'year': 2024,
-            'in_stock': False
-        },
-        {
-            'name': 'Развивающий коврик',
-            'price': '4 999',
-            'price_num': 4999,
-            'image': 'images/products/toys/playmat.jpg',
-            'category': 'educational',
-            'year': 2023,
-            'in_stock': True
-        },
-        {
-            'name': 'Набор мягких кубиков',
-            'price': '899',
-            'price_num': 899,
-            'image': 'images/products/toys/blocks.jpg',
-            'category': 'educational',
-            'year': 2024,
-            'in_stock': True
-        },
-        {
-            'name': 'Творческий набор для рисования',
-            'price': '1 599',
-            'price_num': 1599,
-            'image': 'images/products/accessories/art-set.jpg',
-            'category': 'creative',
-            'year': 2023,
-            'in_stock': True
-        },
-        {
-            'name': 'Плюшевый зайчик',
-            'price': '1 199',
-            'price_num': 1199,
-            'image': 'images/products/toys/bunny.jpg',
-            'category': 'plush',
-            'year': 2024,
-            'in_stock': True
-        },
-        {
-            'name': 'Деревянный конструктор',
-            'price': '2 299',
-            'price_num': 2299,
-            'image': 'images/products/toys/wooden-constructor.jpg',
-            'category': 'constructor',
-            'year': 2023,
-            'in_stock': False
-        }
-    ]
+    # ФИЛЬТРУЕМ ТОЛЬКО ТОВАРЫ В НАЛИЧИИ
+    products = Product.objects.filter(in_stock=True)
     
-    return render(request, 'catalog.html', {'products': products})
+    context = {
+        'products': products,
+    }
+    return render(request, 'catalog.html', context)
+
+def product_detail(request, product_id):
+    # ТОЖЕ ФИЛЬТРУЕМ ТОЛЬКО ТОВАРЫ В НАЛИЧИИ
+    product = get_object_or_404(Product, id=product_id, in_stock=True)
+    return render(request, 'product_detail.html', {'product': product})
 
 def contacts(request):
     return render(request, 'contacts.html')
+
 def register_view(request):
     if request.method == 'POST':
         form = RegistrationForm(request.POST)
