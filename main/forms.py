@@ -1,5 +1,7 @@
 from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
+from django.contrib.auth import authenticate
+from django.core.exceptions import ValidationError
 from .models import CustomUser
 import re
 
@@ -90,7 +92,25 @@ class RegistrationForm(UserCreationForm):
         username = self.cleaned_data.get('username')
         if username and not re.match(r'^[a-zA-Z0-9-]+$', username):
             raise forms.ValidationError('Логин может содержать только латиницу, цифры и тире')
+        if CustomUser.objects.filter(username=username).exists():
+            raise forms.ValidationError('Пользователь с таким логином уже существует')
         return username
+
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if CustomUser.objects.filter(email=email).exists():
+            raise forms.ValidationError('Пользователь с таким email уже существует')
+        return email
+
+    def clean(self):
+        cleaned_data = super().clean()
+        password1 = cleaned_data.get("password1")
+        password2 = cleaned_data.get("password2")
+
+        if password1 and password2 and password1 != password2:
+            self.add_error('password2', "Пароли не совпадают")
+
+        return cleaned_data
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -98,9 +118,7 @@ class RegistrationForm(UserCreationForm):
         user.first_name = self.cleaned_data['name']
         user.patronymic = self.cleaned_data['patronymic']
         
-        # Вызываем валидацию модели
         if commit:
-            user.full_clean()  # Это вызовет валидацию из модели
             user.save()
         return user
 
@@ -119,3 +137,22 @@ class LoginForm(AuthenticationForm):
             'id': 'id_password'
         })
     )
+
+class OrderConfirmationForm(forms.Form):
+    password = forms.CharField(
+        label='Пароль для подтверждения заказа',
+        widget=forms.PasswordInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Введите ваш пароль'
+        })
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+    def clean_password(self):
+        password = self.cleaned_data.get('password')
+        if self.user and not self.user.check_password(password):
+            raise ValidationError('Неверный пароль')
+        return password
