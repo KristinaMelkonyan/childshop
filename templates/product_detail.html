@@ -27,8 +27,8 @@
                 <!-- Цена и статус -->
                 <div class="d-flex align-items-center mb-3">
                     <span class="price fs-2 fw-bold">{{ product.price }} ₽</span>
-                    {% if product.in_stock %}
-                    <span class="badge stock-badge ms-3">В наличии</span>
+                    {% if product.stock_quantity > 0 %}
+                    <span class="badge stock-badge ms-3">В наличии: {{ product.stock_quantity }} шт.</span>
                     {% else %}
                     <span class="badge bg-secondary ms-3">Нет в наличии</span>
                     {% endif %}
@@ -41,11 +41,22 @@
                         <div class="spec-item mb-2">
                             <strong>Категория:</strong> {{ product.get_category_display }}
                         </div>
+                        {% if product.model %}
+                        <div class="spec-item mb-2">
+                            <strong>Модель:</strong> {{ product.model }}
+                        </div>
+                        {% endif %}
+                        <div class="spec-item mb-2">
+                            <strong>Страна производства:</strong> {{ product.country }}
+                        </div>
                         {% if product.year %}
                         <div class="spec-item mb-2">
                             <strong>Год производства:</strong> {{ product.year }}
                         </div>
                         {% endif %}
+                        <div class="spec-item mb-2">
+                            <strong>Количество на складе:</strong> {{ product.stock_quantity }} шт.
+                        </div>
                     </div>
                 </div>
                 
@@ -59,8 +70,8 @@
                 
                 <!-- Кнопки действий -->
                 <div class="action-buttons">
-                    {% if product.in_stock %}
-                    <button class="btn primary-btn btn-lg w-100 mb-2">
+                    {% if product.stock_quantity > 0 %}
+                    <button class="btn primary-btn btn-lg w-100 mb-2 add-to-cart-btn" data-product-id="{{ product.id }}">
                         🛒 Добавить в корзину
                     </button>
                     {% else %}
@@ -76,6 +87,80 @@
         </div>
     </div>
 </div>
+
+<script>
+// Функция для добавления товара в корзину
+function addToCart(productId) {
+    fetch(`/cart/add/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Товар добавлен в корзину!');
+            updateCartBadge(data.cart_total);
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ошибка при добавлении товара в корзину');
+    });
+}
+
+// Функция для обновления счетчика корзины
+function updateCartBadge(count) {
+    const cartBadge = document.querySelector('.badge.bg-danger');
+    const cartLink = document.querySelector('a[href="/cart/"]');
+    
+    if (cartBadge) {
+        if (count > 0) {
+            cartBadge.textContent = count;
+            cartBadge.style.display = 'inline';
+        } else {
+            cartBadge.style.display = 'none';
+        }
+    } else if (count > 0 && cartLink) {
+        const newBadge = document.createElement('span');
+        newBadge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+        newBadge.textContent = count;
+        newBadge.style.display = 'inline';
+        cartLink.appendChild(newBadge);
+    }
+}
+
+// Функция для получения CSRF токена
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Добавляем обработчик события на кнопку добавления в корзину
+document.addEventListener('DOMContentLoaded', function() {
+    const addToCartBtn = document.querySelector('.add-to-cart-btn');
+    if (addToCartBtn) {
+        addToCartBtn.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            addToCart(productId);
+        });
+    }
+});
+</script>
 
 <style>
     /* Цветовая схема как в каталоге */

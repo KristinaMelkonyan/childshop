@@ -139,8 +139,13 @@
                             <!-- Информация -->
                             <div class="card-body d-flex flex-column">
                                 <small class="text-muted category-text">{{ product.get_category_display }}</small>
+                                {% if product.model %}
+                                <small class="text-muted d-block">Модель: {{ product.model }}</small>
+                                {% endif %}
                                 <h6 class="card-title">{{ product.name }}</h6>
-                                
+                                <br>
+                                <small class="text-muted">Страна: {{ product.country }}</small>
+                                <br>
                                 <div class="mb-2">
                                     <span class="text-warning">★ ★ ★ ★ ☆</span>
                                     <small class="text-muted">(24)</small>
@@ -156,7 +161,7 @@
                     </a>
 
                     <!-- Кнопка корзины на всю ширину -->
-                    <button class="btn cart-btn-full w-100 mt-2">
+                    <button class="btn cart-btn-full w-100 mt-2" onclick="addToCart('{{ product.id }}', this)">
                         🛒 Добавить в корзину
                     </button>
                 </div>
@@ -192,6 +197,79 @@
 </div>
 
 <script>
+// Функция для добавления товара в корзину
+function addToCart(productId, buttonElement) {
+    fetch(`/cart/add/${productId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Временное уведомление на кнопке
+            const originalText = buttonElement.innerHTML;
+            buttonElement.innerHTML = '✓ Добавлено!';
+            buttonElement.style.background = '#28a745';
+            buttonElement.style.color = 'white';
+            
+            setTimeout(() => {
+                buttonElement.innerHTML = originalText;
+                buttonElement.style.background = '';
+                buttonElement.style.color = '';
+            }, 2000);
+            
+            // Обновляем счетчик корзины
+            updateCartBadge(data.cart_total);
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ошибка при добавлении товара в корзину');
+    });
+}
+
+// Функция для обновления счетчика корзины
+function updateCartBadge(count) {
+    const cartBadge = document.querySelector('.badge.bg-danger');
+    const cartLink = document.querySelector('a[href="/cart/"]');
+    
+    if (cartBadge) {
+        if (count > 0) {
+            cartBadge.textContent = count;
+            cartBadge.style.display = 'inline';
+        } else {
+            cartBadge.style.display = 'none';
+        }
+    } else if (count > 0 && cartLink) {
+        const newBadge = document.createElement('span');
+        newBadge.className = 'position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger';
+        newBadge.textContent = count;
+        newBadge.style.display = 'inline';
+        cartLink.appendChild(newBadge);
+    }
+}
+
+// Функция для получения CSRF токена
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Элементы фильтров
     const categoryFilter = document.getElementById('categoryFilter');
@@ -208,29 +286,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const productsCount = document.getElementById('productsCount');
     const productsCountMobile = document.getElementById('productsCountMobile');
     const productCards = productsContainer.querySelectorAll('.product-card');
-
-    // Обработчики для кнопок корзины
-    document.querySelectorAll('.cart-btn-full').forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            const productCard = this.closest('.product-card');
-            const productName = productCard.querySelector('.card-title').textContent;
-            const productPrice = productCard.querySelector('.price').textContent;
-            
-            // Временное уведомление
-            this.innerHTML = '✓ Добавлено!';
-            this.style.background = '#28a745';
-            
-            setTimeout(() => {
-                this.innerHTML = '🛒 Добавить в корзину';
-                this.style.background = '';
-            }, 2000);
-            
-            console.log(`Товар добавлен в корзину: ${productName} - ${productPrice}`);
-        });
-    });
 
     function applyAllFilters() {
         const category = categoryFilter.value;
