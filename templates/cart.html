@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center mb-4">Корзина</h1>
+    
+    {% if cart_items %}
+    <div class="row">
+        <div class="col-md-8">
+            <!-- Список товаров в корзине -->
+            {% for item in cart_items %}
+            <div class="card mb-3 cart-item" data-product-id="{{ item.product.id }}">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2">
+                            {% if item.product.image %}
+                            <img src="{{ item.product.image.url }}" 
+                                 class="img-fluid rounded"
+                                 alt="{{ item.product.name }}"
+                                 style="height: 80px; object-fit: cover;">
+                            {% else %}
+                            <img src="{% static 'images/no-image.jpg' %}" 
+                                 class="img-fluid rounded"
+                                 alt="Нет изображения"
+                                 style="height: 80px; object-fit: cover;">
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <h6 class="card-title mb-1">{{ item.product.name }}</h6>
+                            <small class="text-muted">{{ item.product.get_category_display }}</small>
+                            <div class="mt-1">
+                                <small class="text-muted">
+                                    <i class="fas fa-box"></i> Доступно: {{ item.product.stock_quantity }} шт.
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <div class="quantity-controls d-flex align-items-center">
+                                <button class="btn btn-outline-secondary btn-sm decrease-quantity" 
+                                        {% if item.quantity <= 1 %}disabled{% endif %}>
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <span class="mx-3 quantity-display">{{ item.quantity }}</span>
+                                <button class="btn btn-outline-secondary btn-sm increase-quantity"
+                                        {% if item.quantity >= item.product.stock_quantity %}disabled{% endif %}>
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            {% if item.quantity > item.product.stock_quantity %}
+                            <div class="text-danger small mt-1">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Превышает доступное количество
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-2 text-center">
+                            <span class="fw-bold text-primary item-total-price">
+                                {{ item.get_total_price }} ₽
+                            </span>
+                            <div class="text-muted small">
+                                {{ item.product.price }} ₽/шт
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-2 text-end">
+                            <button class="btn btn-outline-danger btn-sm delete-item">
+                                <i class="fas fa-trash"></i> Удалить
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="col-md-4">
+            <!-- Итоги и оформление заказа -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Итоги заказа</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Товары ({{ cart.get_total_quantity }}):</span>
+                        <span>{{ cart.get_total_price }} ₽</span>
+                    </div>
+                    
+                    <!-- Проверка доступности товаров -->
+                    {% for item in cart_items %}
+                        {% if item.quantity > item.product.stock_quantity %}
+                        <div class="alert alert-warning py-2 mb-2">
+                            <small>
+                                <i class="fas fa-exclamation-triangle"></i>
+                                «{{ item.product.name }}» - недостаточно на складе
+                            </small>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    <div class="d-flex justify-content-between mb-3">
+                        <strong>Итого:</strong>
+                        <strong class="text-primary fs-5">{{ cart.get_total_price }} ₽</strong>
+                    </div>
+                    
+                    <hr>
+                    
+                    <!-- Форма подтверждения заказа -->
+                    <form id="orderForm">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="{{ form.password.id_for_label }}" class="form-label">
+                                <i class="fas fa-lock"></i> {{ form.password.label }}
+                            </label>
+                            {{ form.password }}
+                            <div class="form-text">Подтвердите пароль для оформления заказа</div>
+                            <div class="invalid-feedback" id="password_error"></div>
+                        </div>
+                        
+                        {% for item in cart_items %}
+                            {% if item.quantity > item.product.stock_quantity %}
+                            <div class="alert alert-danger">
+                                <i class="fas fa-times-circle"></i>
+                                Невозможно оформить заказ: некоторые товары недоступны в нужном количестве
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        <button type="submit" class="btn btn-primary w-100 btn-lg" 
+                                id="submitOrderBtn"
+                                {% if cart_items|length == 0 %}disabled{% endif %}>
+                            <i class="fas fa-shopping-bag"></i> 
+                            {% for item in cart_items %}
+                                {% if item.quantity > item.product.stock_quantity %}
+                                    Недостаточно товаров
+                                {% else %}
+                                    Сформировать заказ
+                                {% endif %}
+                            {% endfor %}
+                        </button>
+                    </form>
+                    
+                    <div class="mt-3 text-center">
+                        <a href="{% url 'catalog' %}" class="btn btn-outline-secondary w-100">
+                            <i class="fas fa-arrow-left"></i> Продолжить покупки
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Информация о доставке -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-shipping-fast"></i> Информация о доставке
+                    </h6>
+                    <ul class="list-unstyled small">
+                        <li><i class="fas fa-check text-success"></i> Бесплатная доставка от 3000 ₽</li>
+                        <li><i class="fas fa-check text-success"></i> Доставка 1-3 дня</li>
+                        <li><i class="fas fa-check text-success"></i> Самовывоз из магазина</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
+        <h3>Корзина пуста</h3>
+        <p class="text-muted">Добавьте товары из каталога</p>
+        <a href="{% url 'catalog' %}" class="btn btn-primary">
+            <i class="fas fa-store"></i> Перейти в каталог
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Функция для обновления бейджа корзины
+function updateCartBadge(count) {
+    const cartBadge = document.querySelector('.cart-badge');
+    if (cartBadge) {
+        if (count > 0) {
+            cartBadge.textContent = count;
+            cartBadge.style.display = 'inline';
+        } else {
+            cartBadge.style.display = 'none';
+        }
+    }
+}
+
+// Функция для проверки доступности заказа
+function canSubmitOrder() {
+    let canSubmit = true;
+    document.querySelectorAll('.cart-item').forEach(item => {
+        const quantity = parseInt(item.querySelector('.quantity-display').textContent);
+        const stock = parseInt('{{ item.product.stock_quantity }}'); // Это нужно обновить динамически
+        if (quantity > stock) {
+            canSubmit = false;
+        }
+    });
+    return canSubmit;
+}
+
+// Управление количеством товаров
+document.querySelectorAll('.increase-quantity').forEach(button => {
+    button.addEventListener('click', function() {
+        const cartItem = this.closest('.cart-item');
+        const productId = cartItem.dataset.productId;
+        const quantityDisplay = cartItem.querySelector('.quantity-display');
+        const currentQuantity = parseInt(quantityDisplay.textContent);
+        
+        // Проверяем доступное количество
+        const stockQuantity = parseInt('{{ item.product.stock_quantity }}'); // Нужно получить актуальное значение
+        
+        if (currentQuantity >= stockQuantity) {
+            alert(`Нельзя добавить больше ${stockQuantity} единиц товара`);
+            return;
+        }
+        
+        fetch(`/cart/add/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка при обновлении корзины');
+        });
+    });
+});
+
+document.querySelectorAll('.decrease-quantity').forEach(button => {
+    button.addEventListener('click', function() {
+        const cartItem = this.closest('.cart-item');
+        const productId = cartItem.dataset.productId;
+        
+        fetch(`/cart/remove/${productId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Ошибка при обновлении корзины');
+        });
+    });
+});
+
+// Удаление товара
+document.querySelectorAll('.delete-item').forEach(button => {
+    button.addEventListener('click', function() {
+        const cartItem = this.closest('.cart-item');
+        const productId = cartItem.dataset.productId;
+        const productName = cartItem.querySelector('.card-title').textContent;
+        
+        if (confirm(`Удалить товар "${productName}" из корзины?`)) {
+            fetch(`/cart/delete/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    cartItem.style.opacity = '0.5';
+                    setTimeout(() => {
+                        cartItem.remove();
+                        if (document.querySelectorAll('.cart-item').length === 0) {
+                            location.reload();
+                        } else {
+                            // Обновляем итоги
+                            location.reload();
+                        }
+                    }, 300);
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Ошибка при удалении товара');
+            });
+        }
+    });
+});
+
+// Оформление заказа
+document.getElementById('orderForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submitOrderBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Оформление...';
+    
+    const formData = new FormData(this);
+    
+    fetch("{% url 'cart' %}", {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Очищаем предыдущие ошибки
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
+        
+        if (data.success) {
+            alert(data.message);
+            // Обновляем бейдж корзины
+            updateCartBadge(0);
+            // Перенаправляем на главную или страницу заказов
+            setTimeout(() => {
+                window.location.href = "{% url 'profile' %}";
+            }, 1000);
+        } else {
+            // Показываем ошибки
+            for (const [field, error] of Object.entries(data.errors)) {
+                const input = document.getElementById(`id_${field}`);
+                const errorDiv = document.getElementById(`${field}_error`);
+                if (input && errorDiv) {
+                    input.classList.add('is-invalid');
+                    errorDiv.textContent = error;
+                }
+            }
+            // Если есть общее сообщение об ошибке
+            if (data.message) {
+                alert(data.message);
+            }
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ошибка при оформлении заказа');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-shopping-bag"></i> Сформировать заказ';
+    });
+});
+
+// Проверка доступности заказа при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    let hasInsufficientStock = false;
+    document.querySelectorAll('.cart-item').forEach(item => {
+        const quantity = parseInt(item.querySelector('.quantity-display').textContent);
+        // Здесь нужно получить актуальное количество со склада
+        // Пока используем перезагрузку страницы для актуальных данных
+    });
+    
+    if (hasInsufficientStock) {
+        document.getElementById('submitOrderBtn').disabled = true;
+    }
+});
+</script>
+
+<style>
+.quantity-controls .btn {
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quantity-display {
+    font-weight: bold;
+    min-width: 30px;
+    text-align: center;
+}
+
+.cart-item {
+    transition: all 0.3s ease;
+}
+
+.cart-item:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+}
+
+.cart-badge {
+    font-size: 0.7em;
+    position: absolute;
+    top: -8px;
+    right: -8px;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.alert {
+    font-size: 0.9em;
+    margin-bottom: 0.5rem;
+}
+</style>
+{% endblock %}

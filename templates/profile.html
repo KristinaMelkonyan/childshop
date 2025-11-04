@@ -1,0 +1,220 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="row">
+        <!-- Боковая панель -->
+        <div class="col-md-3 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Личный кабинет</h5>
+                    <ul class="nav nav-pills flex-column">
+                        <li class="nav-item">
+                            <a href="{% url 'profile' %}" class="nav-link active">
+                                📦 Мои заказы
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'catalog' %}" class="nav-link">
+                                🏪 Каталог товаров
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{% url 'cart' %}" class="nav-link">
+                                🛒 Корзина
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Информация о пользователе -->
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h6 class="card-subtitle mb-2 text-muted">Пользователь</h6>
+                    <p class="mb-1"><strong>ФИО:</strong><br>
+                        {{ user.last_name }} {{ user.first_name }} {{ user.patronymic|default:"" }}
+                    </p>
+                    <p class="mb-1"><strong>Логин:</strong><br>{{ user.username }}</p>
+                    <p class="mb-0"><strong>Email:</strong><br>{{ user.email }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Основной контент -->
+        <div class="col-md-9">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">Мои заказы</h4>
+                </div>
+                <div class="card-body">
+                    {% if orders %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>№ Заказа</th>
+                                        <th>Дата</th>
+                                        <th>Товары</th>
+                                        <th>Количество</th>
+                                        <th>Сумма</th>
+                                        <th>Статус</th>
+                                        <th>Действия</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for order in orders %}
+                                    <tr>
+                                        <td>
+                                            <strong>#{{ order.id }}</strong>
+                                        </td>
+                                        <td>
+                                            {{ order.created_at|date:"d.m.Y H:i" }}
+                                        </td>
+                                        <td>
+                                            {% for item in order.orderitem_set.all %}
+                                                <div class="mb-1">
+                                                    • {{ item.product.name }}
+                                                    <small class="text-muted">({{ item.price }} ₽)</small>
+                                                </div>
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            {% for item in order.orderitem_set.all %}
+                                                <div class="mb-1">{{ item.quantity }} шт.</div>
+                                            {% endfor %}
+                                        </td>
+                                        <td>
+                                            <strong>{{ order.total_price }} ₽</strong>
+                                        </td>
+                                        <td>
+                                            {% if order.status == 'pending' %}
+                                                <span class="badge bg-warning text-dark">Ожидает обработки</span>
+                                            {% elif order.status == 'processing' %}
+                                                <span class="badge bg-info">В обработке</span>
+                                            {% elif order.status == 'completed' %}
+                                                <span class="badge bg-success">Завершен</span>
+                                            {% elif order.status == 'cancelled' %}
+                                                <span class="badge bg-secondary">Отменен</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if order.status == 'pending' %}
+                                                <button type="button" 
+                                                        class="btn btn-outline-danger btn-sm cancel-order-btn" 
+                                                        data-order-id="{{ order.id }}">
+                                                    Отменить
+                                                </button>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <div class="mb-4">
+                                <i class="fas fa-shopping-bag fa-3x text-muted"></i>
+                            </div>
+                            <h5 class="text-muted">У вас пока нет заказов</h5>
+                            <p class="text-muted">Сделайте свой первый заказ в нашем каталоге</p>
+                            <a href="{% url 'catalog' %}" class="btn btn-primary">
+                                Перейти в каталог
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Обработка отмены заказа
+    document.querySelectorAll('.cancel-order-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const orderId = this.getAttribute('data-order-id');
+            if (confirm('Вы действительно хотите отменить этот заказ?')) {
+                cancelOrder(orderId);
+            }
+        });
+    });
+});
+
+function cancelOrder(orderId) {
+    fetch(`/profile/cancel-order/${orderId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload(); // Перезагружаем страницу для обновления статуса
+        } else {
+            alert(data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Ошибка при отмене заказа');
+    });
+}
+
+// Функция для получения CSRF токена
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+
+<style>
+.card {
+    border: none;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.nav-pills .nav-link.active {
+    background-color: #ff7eb9;
+    border: none;
+}
+
+.nav-pills .nav-link {
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: #f8f9fa;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #555;
+}
+
+.badge {
+    font-size: 0.8em;
+    padding: 0.5em 0.75em;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "admin/base.html" %}
+{% load static %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | Детский магазин{% endblock %}
+
+{% block branding %}
+<h1 id="site-name">
+    <a href="{% url 'admin:index' %}">
+        🎪 Админка детского магазина
+    </a>
+</h1>
+{% endblock %}
+
+{% block extrastyle %}
+{{ block.super }}
+<style>
+/* Хедер */
+#header {
+    background: #ff7eb9 !important;
+}
+
+/* Заголовки модулей */
+.module h2, .module caption, .inline-group h2 {
+    background: #ff7eb9 !important;
+}
+
+/* Кнопки */
+.button, input[type=submit], input[type=button], .submit-row input, a.button {
+    background: #ff7eb9 !important;
+    border: none !important;
+}
+
+.button.default, input[type=submit].default, .submit-row input.default {
+    background: #ffd166 !important;
+    color: #333 !important;
+}
+
+/* Ховер эффекты */
+.button:hover, input[type=submit]:hover, input[type=button]:hover, 
+.submit-row input:hover, a.button:hover {
+    background: #ff65a3 !important;
+}
+
+/* Текст в хедере */
+#branding h1, #branding h1 a:link, #branding h1 a:visited {
+    color: white !important;
+    font-weight: bold;
+}
+
+/* Боковая панель */
+#content-related .module h2 {
+    background: #ff7eb9 !important;
+}
+
+/* Хлебные крошки */
+.breadcrumbs {
+    background: #fff9f9 !important;
+    border: 1px solid #ffe6ee;
+}
+</style>
+{% endblock %}
