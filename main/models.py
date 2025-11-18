@@ -40,25 +40,33 @@ class CustomUser(AbstractUser):
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
-class Product(models.Model):
-    CATEGORY_CHOICES = [
-        ('plush', 'Плюшевые игрушки'),
-        ('constructor', 'Конструкторы'),
-        ('doll', 'Куклы'),
-        ('educational', 'Развивающие игрушки'),
-        ('creative', 'Творческие наборы'),
-    ]
+class Category(models.Model):
+    name = models.CharField(max_length=100, verbose_name='Название категории')
+    slug = models.SlugField(unique=True, verbose_name='URL')
+    description = models.TextField(blank=True, verbose_name='Описание')
+    is_active = models.BooleanField(default=True, verbose_name='Активна')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
 
+    class Meta:
+        verbose_name = 'Категория'
+        verbose_name_plural = 'Категории'
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+class Product(models.Model):
     name = models.CharField(max_length=200, verbose_name='Наименование')
     price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Цена')
     description = models.TextField(verbose_name='Описание', blank=True)
-    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, verbose_name='Категория')
+    category = models.ForeignKey(Category, on_delete=models.CASCADE, verbose_name='Категория')
     image = models.ImageField(upload_to='products/', verbose_name='Изображение', blank=True)
     year = models.IntegerField(verbose_name='Год производства')
     country = models.CharField(max_length=100, verbose_name='Страна производства', default='Россия')
     model = models.CharField(max_length=100, verbose_name='Модель', blank=True)
     in_stock = models.BooleanField(default=True, verbose_name='В наличии')
     stock_quantity = models.IntegerField(default=10, verbose_name='Количество на складе')
+    is_published = models.BooleanField(default=True, verbose_name='Опубликован')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата добавления')
 
     class Meta:
@@ -110,8 +118,8 @@ class CartItem(models.Model):
 
 class Order(models.Model):
     STATUS_CHOICES = [
-        ('pending', 'Ожидает обработки'),
-        ('processing', 'В обработке'),
+        ('pending', 'Новый'),
+        ('processing', 'Подтвержден'),
         ('completed', 'Завершен'),
         ('cancelled', 'Отменен'),
     ]
@@ -120,6 +128,7 @@ class Order(models.Model):
     items = models.ManyToManyField(Product, through='OrderItem', verbose_name='Товары')
     total_price = models.DecimalField(max_digits=10, decimal_places=2, verbose_name='Общая стоимость')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name='Статус')
+    cancellation_reason = models.TextField(blank=True, default='', verbose_name='Причина отказа')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Дата создания')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Дата обновления')
 
@@ -130,6 +139,12 @@ class Order(models.Model):
 
     def __str__(self):
         return f'Заказ #{self.id} от {self.user.username}'
+
+    def get_user_full_name(self):
+        return f"{self.user.last_name} {self.user.first_name} {self.user.patronymic or ''}".strip()
+
+    def get_items_count(self):
+        return self.orderitem_set.count()
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, verbose_name='Заказ')

@@ -1,0 +1,57 @@
+{% extends "admin/base_site.html" %}
+{% load i18n %}
+
+{% block content %}
+<div id="content-main">
+    <h1>{{ title }}</h1>
+    
+    <p>Вы собираетесь отменить следующие заказы:</p>
+    
+    <ul>
+        {% for order in orders %}
+        <li><strong>Заказ #{{ order.id }}</strong> от {{ order.user.get_full_name|default:order.user.username }} - {{ order.total_price }} ₽ (Статус: {{ order.get_status_display }})</li>
+        {% endfor %}
+    </ul>
+    
+    <p><strong>Всего заказов: {{ orders|length }}</strong></p>
+    <p><em>Примечание: можно отменять только заказы со статусом "Новый"</em></p>
+
+    <form method="post">
+        {% csrf_token %}
+        
+        <!-- Скрытые поля для передачи выбранных объектов -->
+        {% for order in orders %}
+        <input type="hidden" name="_selected_action" value="{{ order.pk }}">
+        {% endfor %}
+        
+        <input type="hidden" name="action" value="{{ action }}">
+        <input type="hidden" name="post" value="yes">
+        
+        <div class="form-group">
+            <label for="cancellation_reason" style="font-weight: bold; display: block; margin-bottom: 10px;">
+                📝 Причина отказа (будет видна пользователю):
+            </label>
+            <textarea 
+                id="cancellation_reason" 
+                name="cancellation_reason" 
+                rows="5" 
+                cols="80"
+                placeholder="Укажите подробную причину отмены заказа. Это сообщение увидит пользователь."
+                style="width: 100%; padding: 10px; border: 2px solid #ddd; border-radius: 5px; font-family: inherit;"
+                required></textarea>
+            <small style="color: #666; display: block; margin-top: 5px;">
+                Например: "Товар временно отсутствует на складе", "Ошибка в системе", "Неверные данные заказа" и т.д.
+            </small>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <button type="submit" name="apply" class="button" style="background: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer;">
+                ✅ Подтвердить отмену
+            </button>
+            <a href="{% url 'admin:main_order_changelist' %}" style="margin-left: 10px; padding: 10px 20px; background: #6c757d; color: white; text-decoration: none; border-radius: 5px;">
+                ❌ Отмена
+            </a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -255,3 +255,12 @@ def delete_from_cart(request, product_id):
             'success': False,
             'message': 'Товар не найден в корзине'
         })
+@login_required
+def profile(request):
+    orders = Order.objects.filter(user=request.user).prefetch_related(
+        'orderitem_set__product'
+    ).order_by('-created_at')
+    
+    return render(request, 'profile.html', {
+        'orders': orders
+    })
